@@ -1,6 +1,6 @@
-import os
-from flask import Flask, request, send_file
+from flask import Flask, request
 import telebot
+import os
 
 API_TOKEN = '7646070663:AAFv2Av2GxygxjVnhE3b5pay6MjkT3bjp4I'
 WEBHOOK_URL = 'https://telegram-d6fu.onrender.com>/bot'  # Render app URL'inle değiştir
