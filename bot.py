@@ -20,7 +20,7 @@ def index():
     return send_file('index.html')
 
 def start_flask():
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=3000)
 
 if __name__ == "__main__":
     threading.Thread(target=start_bot).start()
