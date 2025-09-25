@@ -1,14 +1,324 @@
 <!DOCTYPE html>
-<html lang='en'>
+<html lang="en">
 <head>
-<meta charset='UTF-8'>
+<meta charset="UTF-8">
 <title>Quantum Network Bot</title>
-<meta name='viewport' content='width=device-width, initial-scale=1.0'>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-/* Stil ve JS buraya eklenebilir */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+body {
+  margin: 0;
+  background: #000;
+  font-family: 'Orbitron', sans-serif;
+  color: #FFD700;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  justify-content: space-between;
+  overflow: hidden;
+}
+
+canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
+
+#mineBtn {
+  width: 180px; height: 180px;
+  margin: 40px auto;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, #ff0000 0%, #000000 90%);
+  border: 3px solid #FFD700;
+  color: #FFD700;
+  font-size: 18px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 25px #ff0000, 0 0 50px #FFD700, inset 0 0 30px #FFD700;
+  transition: all 0.2s ease-in-out;
+}
+
+#mineBtn.mining { transform: scale(1.1); box-shadow: 0 0 60px #FFD700, 0 0 100px #ff0000, inset 0 0 50px #FFD700; }
+#mineBtn:hover { transform: scale(1.15); box-shadow: 0 0 70px #FFD700, 0 0 120px #ff0000, inset 0 0 60px #FFD700; }
+
+#mineBtn::before {
+  content: "";
+  position: absolute;
+  width: 250%; height: 250%;
+  border-radius: 50%;
+  border: 3px dashed rgba(255,215,0,0.6);
+  top: -75%; left: -75%;
+  animation: spin 12s linear infinite;
+}
+
+@keyframes spin { from { transform: rotate(0deg);} to { transform: rotate(360deg);} }
+
+#countdown { text-align: center; margin-top: 10px; font-size: 16px; color: #FF4444; text-shadow: 0 0 10px #FF4444; }
+
+#bonusBtn {
+  margin: 20px auto;
+  padding: 12px 28px;
+  background: linear-gradient(90deg, #ff0000, #FFD700);
+  border: none;
+  border-radius: 16px;
+  font-size: 16px;
+  color: black;
+  cursor: pointer;
+  font-weight: bold;
+  box-shadow: 0 0 15px #FFD700, 0 0 30px #ff0000;
+  transition: all 0.3s ease;
+}
+
+#bonusBtn.disabled { background: grey; cursor: not-allowed; box-shadow: none; opacity: 0.5; }
+#bonusBtn:hover:not(.disabled) { transform: scale(1.05); box-shadow: 0 0 25px #FFD700, 0 0 40px #ff0000; }
+
+#openBtn {
+  margin: 20px auto;
+  padding: 12px 28px;
+  background: linear-gradient(90deg, #FFD700, #ff0000);
+  border: none;
+  border-radius: 16px;
+  font-size: 16px;
+  color: black;
+  cursor: pointer;
+  font-weight: bold;
+  box-shadow: 0 0 15px #FFD700, 0 0 30px #ff0000;
+  transition: all 0.3s ease;
+}
+
+#openBtn:disabled { background: grey; cursor: not-allowed; opacity: 0.5; }
+
+.tabs { display: flex; justify-content: space-around; background: #111; padding: 10px 0; border-top: 2px solid #ff0000; }
+.tab { flex: 1; text-align: center; color: #FFD700; font-size: 14px; cursor: pointer; transition: all 0.2s; }
+.tab.active { color: #ff0000; font-weight: bold; text-shadow: 0 0 5px #ff0000; }
+.tab:hover { color: #ff4444; text-shadow: 0 0 5px #ff4444; }
+
+.content { flex: 1; display: none; padding: 20px; text-align: center; }
+.content.active { display: block; }
+h2 { color: #FFD700; text-shadow: 0 0 10px #FFD700; }
+
+#balanceAmount { font-size: 20px; text-shadow: 0 0 15px #FFD700; }
+#bonusCountdown { font-size: 16px; text-shadow: 0 0 5px #FF4444; }
+
+/* Quantum Wave Halo */
+.halo {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  border: 2px solid rgba(255,215,0,0.7);
+  animation: haloPulse 1.2s ease-out forwards;
+}
+@keyframes haloPulse {
+  0% { transform: scale(0.2); opacity:1; }
+  100% { transform: scale(2); opacity:0; }
+}
 </style>
 </head>
 <body>
-<h1>Quantum Network Bot</h1>
+<canvas id="particles"></canvas>
+
+<!-- Mine Tab -->
+<div id="mine" class="content active">
+  <div id="mineBtn">⚡ Quantum<br>Mine</div>
+  <div id="countdown">Not mining</div>
+</div>
+
+<!-- Balance Tab -->
+<div id="balance" class="content">
+  <h2>Balance</h2>
+  <p id="balanceAmount">0 QNET</p>
+</div>
+
+<!-- Daily Bonus Tab -->
+<div id="bonus" class="content">
+  <h2>Daily Bonus</h2>
+  <button id="bonusBtn" class="disabled">Claim Reward</button>
+  <p id="bonusCountdown">Bonus available!</p>
+</div>
+
+<!-- Leaderboard Tab -->
+<div id="leaderboard" class="content">
+  <h2>Leaderboard</h2>
+  <p>Coming Soon...</p>
+</div>
+
+<!-- Account Tab -->
+<div id="account" class="content">
+  <h2>Account</h2>
+  <button id="openBtn">OPEN (Telegram Wallet Login)</button>
+  <p id="accountInfo">User: Not logged in</p>
+</div>
+
+<!-- Tabs -->
+<div class="tabs">
+  <div class="tab active" data-target="mine">Mine</div>
+  <div class="tab" data-target="balance">Balance</div>
+  <div class="tab" data-target="bonus">Daily Bonus</div>
+  <div class="tab" data-target="leaderboard">Leaderboard</div>
+  <div class="tab" data-target="account">Account</div>
+</div>
+
+<script>
+// LocalStorage & Mining Variables
+let mining = JSON.parse(localStorage.getItem('mining')) || false;
+let mineTime = parseInt(localStorage.getItem('mineTime')) || 0;
+let balance = parseInt(localStorage.getItem('balance')) || 0;
+let bonusTime = parseInt(localStorage.getItem('bonusTime')) || 0;
+let displayedBalance = 0;
+let lastHour = mineTime;
+
+// Elements
+const mineBtn = document.getElementById("mineBtn");
+const countdown = document.getElementById("countdown");
+const balanceAmount = document.getElementById("balanceAmount");
+const bonusBtn = document.getElementById("bonusBtn");
+const bonusCountdown = document.getElementById("bonusCountdown");
+const canvas = document.getElementById("particles");
+const ctx = canvas.getContext("2d");
+const openBtn = document.getElementById("openBtn");
+const accountInfo = document.getElementById("accountInfo");
+canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+
+// Particles
+let particleCount = window.innerWidth > 1000 ? 120 : 60;
+let particles = [];
+for (let i=0;i<particleCount;i++){
+    particles.push({
+        x:Math.random()*canvas.width,
+        y:Math.random()*canvas.height,
+        r:Math.random()*2+1,
+        dx:(Math.random()-0.5)*0.6,
+        dy:(Math.random()-0.5)*0.6,
+        color:Math.random()>0.5?"#FFD700":"#ff0000"
+    });
+}
+
+// Spark effect
+function spark(x,y){
+  let s={x,y,r:Math.random()*2+1,dx:(Math.random()-0.5)*2,dy:(Math.random()-0.5)*2,color:'#FFD700', life:20};
+  particles.push(s);
+  let halo=document.createElement("div");
+  halo.className="halo";
+  document.body.appendChild(halo);
+  let rect=mineBtn.getBoundingClientRect();
+  halo.style.left=rect.left+rect.width/2-50+"px";
+  halo.style.top=rect.top+rect.height/2-50+"px";
+  halo.style.width="100px";
+  halo.style.height="100px";
+  setTimeout(()=>halo.remove(),1200);
+}
+
+// Animate Particles
+function animateParticles(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  particles.forEach((p,i)=>{
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.fillStyle=p.color;
+    ctx.fill();
+    p.x+=p.dx;p.y+=p.dy;
+    if(p.x<0||p.x>canvas.width)p.dx*=-1;
+    if(p.y<0||p.y>canvas.height)p.dy*=-1;
+    if(p.life!==undefined){p.life--; if(p.life<=0)particles.splice(i,1);}
+  });
+  requestAnimationFrame(animateParticles);
+}
+animateParticles();
+
+// Mine Button
+mineBtn.addEventListener("click",()=>{
+  if(!mining){
+    mining=true;
+    mineTime=6*60*60;
+    mineBtn.classList.add("mining");
+    localStorage.setItem('mining',true);
+    localStorage.setItem('mineTime',mineTime);
+  }
+});
+
+// Bonus Button
+bonusBtn.addEventListener("click",()=>{
+  if(bonusTime<=0){
+    balance+=10;
+    bonusTime=24*60*60;
+    bonusBtn.classList.add("disabled");
+    localStorage.setItem('balance',balance);
+    localStorage.setItem('bonusTime',bonusTime);
+    spark();
+  }
+});
+
+// Open Button (Telegram Wallet Login)
+openBtn.addEventListener("click", () => {
+  if(window.TelegramWebApp){
+      const user = window.TelegramWebApp.initDataUnsafe.user;
+      if(user){
+          accountInfo.innerText = "User: @" + user.username;
+      } else {
+          accountInfo.innerText = "User: Telegram Wallet connected";
+      }
+      openBtn.disabled = true;
+      openBtn.innerText = "Connected";
+  } else {
+      alert("Telegram Wallet yok veya webapp değil");
+  }
+});
+
+// Update Loop
+setInterval(()=>{
+  if(mining && mineTime>0){
+    mineTime--;
+    let hours=Math.floor(mineTime/3600);
+    let mins=Math.floor((mineTime%3600)/60);
+    let secs=mineTime%60;
+    countdown.innerText=`${hours}h ${mins}m ${secs}s left`;
+    if(Math.floor(mineTime/3600)!==Math.floor(lastHour/3600)){
+        balance+=10;
+        localStorage.setItem('balance',balance);
+        spark();
+    }
+    lastHour=mineTime;
+    localStorage.setItem('mineTime',mineTime);
+  } else if(mineTime<=0 && mining){
+      mining=false;
+      mineBtn.classList.remove("mining");
+      countdown.innerText="Mining finished. Tap to start again.";
+      localStorage.setItem('mining',false);
+  }
+
+  if(displayedBalance<balance){
+      displayedBalance+=1;
+      balanceAmount.innerText=displayedBalance+" QNET";
+  }
+
+  if(bonusTime>0){
+      bonusTime--;
+      let hrs=Math.floor(bonusTime/3600);
+      let mins=Math.floor((bonusTime%3600)/60);
+      bonusCountdown.innerText=`Next bonus in: ${hrs}h ${mins}m`;
+      bonusBtn.classList.add("disabled");
+      localStorage.setItem('bonusTime',bonusTime);
+  } else {
+      bonusCountdown.innerText="Bonus available!";
+      bonusBtn.classList.remove("disabled");
+  }
+},1000);
+
+// Tabs
+document.querySelectorAll(".tab").forEach(tab=>{
+  tab.addEventListener("click",()=>{
+    document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+    tab.classList.add("active");
+    document.querySelectorAll(".content").forEach(c=>c.classList.remove("active"));
+    document.getElementById(tab.dataset.target).classList.add("active");
+  });
+});
+
+// Resize
+window.addEventListener("resize",()=>{canvas.width=window.innerWidth; canvas.height=window.innerHeight;});
+</script>
 </body>
 </html>
