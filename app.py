@@ -11,12 +11,9 @@ app = Flask(__name__)
 def index():
     return send_file("index.html")  # HTML ayrı dosya olmalı
 
-# Bot polling'i ayrı threadte çalıştırabiliriz
-import threading
-def start_bot():
-    bot.infinity_polling()
 
 threading.Thread(target=start_bot).start()
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
+
