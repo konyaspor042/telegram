@@ -1,8 +1,10 @@
 import telebot
 from flask import Flask, request
+import os
+import requests
 
-API_TOKEN = "7646070663:AAFv2Av2GxygxjVnhE3b5pay6MjkT3bjp4I"  # buraya kendi bot tokenını yaz
-WEBHOOK_URL = "https://telegram-4-2vb8.onrender.com/bot"  # Render URL’in /bot ile
+API_TOKEN = "7646070663:AAFv2Av2GxygxjVnhE3b5pay6MjkT3bjp4I"
+WEBHOOK_URL = "https://telegram-4-2vb8.onrender.com/bot"  # Render URL'in /bot ile
 
 bot = telebot.TeleBot(API_TOKEN, threaded=False)
 app = Flask(__name__)
@@ -28,7 +30,13 @@ def getMessage():
 def index():
     return "Quantum Bot Çalışıyor ✅", 200
 
+# === Webhook ayarlama ve Flask başlatma ===
 if __name__ == "__main__":
-    import os
     port = int(os.environ.get("PORT", 10000))
+    
+    # Önce eski webhook'u kaldır, sonra yeni webhook'u set et
+    bot.remove_webhook()
+    bot.set_webhook(url=WEBHOOK_URL)
+
+    print(f"Webhook ayarlandı: {WEBHOOK_URL}")
     app.run(host="0.0.0.0", port=port)
